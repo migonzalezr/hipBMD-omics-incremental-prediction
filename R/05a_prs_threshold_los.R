@@ -18,7 +18,7 @@ P <- list(
   prs  = file.path(BASE,"derived/prs_los"),
   pca  = file.path(BASE,"data/genotypes/los_qc_pca.eigenvec"),
   clin = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
-  bmd  = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd  = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   out  = file.path(BASE,"results")
 )
 dir.create(P$out, showWarnings = FALSE, recursive = TRUE)
