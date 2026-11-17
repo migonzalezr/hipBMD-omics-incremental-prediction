@@ -19,7 +19,7 @@ P <- list(
   chsp  = file.path(BASE,"data/microbiome/guangzhou_species_abundance.csv"),
   chcl  = file.path(BASE,"data/phenotypes/guangzhou_clinical.csv"),
   mast  = file.path(BASE,"data/microbiome/metagenome_id_map.xlsx"),
-  bmd   = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd   = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   clinB = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
   clinL = file.path(BASE,"data/phenotypes/los_lc_clinical_imputed.csv"),
   disc  = file.path(BASE,"derived/analysis_sets/ids_modeling_discovery.txt"),
