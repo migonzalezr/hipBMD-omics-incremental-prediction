@@ -17,7 +17,7 @@ P <- list(
   fam        = file.path(BASE,"data/genotypes/los_qc.fam"),
   mgs_ids    = file.path(BASE,"data/microbiome/metagenome_sample_ids.xlsx"),
   mgs_filter = file.path(BASE,"data/microbiome/metagenome_sample_filter.xlsx"),
-  bmd        = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd        = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   pca        = file.path(BASE,"data/genotypes/los_qc_pca.eigenvec"),
   clin       = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
   kin        = file.path(BASE,"derived/kinship/los_king.kin0"),
