@@ -15,7 +15,7 @@ library(data.table); library(readxl)
 source("config/paths.R")
 P <- list(
   fam  = file.path(BASE, "data/genotypes/los_qc.fam"),
-  bmd  = file.path(BASE, "data/phenotypes/los_hip_bmd.xlsx"),
+  bmd  = file.path(BASE, "data/phenotypes/los_dxa_bmd.xlsx"),
   king = file.path(BASE, "derived/kinship/los_king.kin0"),
   ar   = file.path(BASE, "derived/analysis_sets")
 )
