@@ -19,7 +19,7 @@ P <- list(
   mgs   = file.path(BASE,"data/microbiome/los_bgi_species_abundance.csv"),
   lcsp  = file.path(BASE,"data/microbiome/los_lc_species_abundance.csv"),
   mast  = file.path(BASE,"data/microbiome/metagenome_id_map.xlsx"),
-  bmd   = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd   = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   clinB = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
   clinL = file.path(BASE,"data/phenotypes/los_lc_clinical_imputed.csv"),
   gpca  = file.path(BASE,"data/genotypes/los_qc_pca.eigenvec"),
