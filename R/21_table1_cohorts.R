@@ -25,7 +25,7 @@ P <- list(
   predC = file.path(BASE,"results/guangzhou_predictions.csv"),
   predL = file.path(BASE,"results/lc_predictions.csv"),
   predH = file.path(BASE,"results/holdout_predictions.csv"),
-  bmd   = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd   = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   out   = file.path(BASE,"results"),
   docs  = file.path(BASE,"results")
 )
