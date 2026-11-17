@@ -3,7 +3,7 @@
 #
 # Assigns every genotyped LOS participant to the GWAS pool or the evaluation set according to availability of gut metagenomes and hip BMD.
 #
-# Inputs : data/genotypes/los_qc.fam; data/phenotypes/los_hip_bmd.xlsx; data/microbiome/metagenome_sample_ids.xlsx; data/microbiome/metagenome_sample_filter.xlsx
+# Inputs : data/genotypes/los_qc.fam; data/phenotypes/los_dxa_bmd.xlsx; data/microbiome/metagenome_sample_ids.xlsx; data/microbiome/metagenome_sample_filter.xlsx
 # Outputs: derived/analysis_sets/cohort_census.rds
 # Paper  : Results 2.1; Figure 1a
 # Run from the repository root; paths are defined in config/paths.R.
@@ -17,7 +17,7 @@ P <- list(
   fam        = file.path(BASE,"data/genotypes/los_qc.fam"),
   mgs_ids    = file.path(BASE,"data/microbiome/metagenome_sample_ids.xlsx"),
   mgs_filter = file.path(BASE,"data/microbiome/metagenome_sample_filter.xlsx"),
-  bmd        = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd        = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   pca        = file.path(BASE,"data/genotypes/los_qc_pca.eigenvec"),
   clin       = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
   kin        = file.path(BASE,"derived/kinship/los_king.kin0"),
