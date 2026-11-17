@@ -29,6 +29,7 @@ config/paths.R          project root (run every script from the repository root)
 plink/                  genotype steps (PLINK 2 / PLINK 1.9)
 R/                      analysis scripts, numbered in run order
 R/figures/              main-text figures 1-4
+python/                 targeted Bacteroides vulgatus lookup (Python)
 external/PLS-PBs/       principal-balance functions (not included; see below)
 ```
 
@@ -54,7 +55,8 @@ external/PLS-PBs/       principal-balance functions (not included; see below)
 | 16 | `R/19_model_interpretation.R` | Permutation importance, SHAP, coefficients | Fig. S6, Table S14 |
 | 17 | `R/20_calibration_metrics.R` | Calibration of the holdout and the LC subset | Fig. 4 |
 | 18 | `R/21_table1_cohorts.R`, `R/22_table2_results.R` | Tables 1 and 2 | Tables 1-2 |
-| 19 | `R/figures/fig1_study_design.R` ... `fig4_calibration.R` | Main-text figures | Figs. 1-4 |
+| 19 | `python/23_bvulgatus_targeted_lookup.py` | Targeted lookup of *Bacteroides vulgatus* (Guangzhou: L1-L4, hip, neck; LOS women: L1-L4, hip, neck). Lumbar spine BMD is used only here | Table S13 |
+| 20 | `R/figures/fig1_study_design.R` ... `fig4_calibration.R` | Main-text figures | Figs. 1-4 |
 
 ## Expected data layout (not included)
 
@@ -62,7 +64,8 @@ Individual-level data are not distributed with this repository. The scripts expe
 
 ```
 data/genotypes/    los_qc.{bed,bim,fam}, los_qc_pca.eigenvec, guangzhou_chr{1..22}.{bed,bim,fam}
-data/phenotypes/   los_hip_bmd.xlsx, los_clinical_imputed.csv, los_lc_clinical_imputed.csv, guangzhou_clinical.csv
+data/phenotypes/   los_dxa_bmd.xlsx, los_clinical_imputed.csv, los_lc_clinical_imputed.csv, los_questionnaire.xlsx,
+                   guangzhou_clinical.csv, guangzhou_dxa.xlsx (sheets Spine, Hip), guangzhou_questionnaire.csv
 data/microbiome/   los_bgi_species_abundance.csv, los_lc_species_abundance.csv, guangzhou_species_abundance.csv,
                    metagenome_sample_ids.xlsx, metagenome_sample_filter.xlsx, metagenome_id_map.xlsx,
                    metagenome_id_corrections.csv (optional; columns old, new)
@@ -84,4 +87,5 @@ MRS scripts.
 ## Software
 
 R 4.6.0 with data.table, readxl, glmnet 5.0, xgboost 3.2.1.1, vegan 2.7.5, zCompositions 1.6.2, compositions,
-pls, MASS, ggplot2 and patchwork; PLINK v1.9 and PLINK 2. Random seeds are fixed (2026).
+pls, MASS, ggplot2 and patchwork; Python 3.12 with pandas 3.1, numpy 2.5, statsmodels 0.15 and openpyxl 3.1;
+PLINK v1.9 and PLINK 2. Random seeds are fixed (2026).
