@@ -18,7 +18,7 @@ source("config/paths.R")
 P <- list(
   mgs   = file.path(BASE,"data/microbiome/los_bgi_species_abundance.csv"),
   mast  = file.path(BASE,"data/microbiome/metagenome_id_map.xlsx"),
-  bmd   = file.path(BASE,"data/phenotypes/los_hip_bmd.xlsx"),
+  bmd   = file.path(BASE,"data/phenotypes/los_dxa_bmd.xlsx"),
   clinB = file.path(BASE,"data/phenotypes/los_clinical_imputed.csv"),
   disc  = file.path(BASE,"derived/analysis_sets/ids_modeling_discovery.txt"),
   ref   = file.path(BASE,"results/species_association.csv"),
