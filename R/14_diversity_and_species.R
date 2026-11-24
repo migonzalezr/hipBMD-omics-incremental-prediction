@@ -106,10 +106,10 @@ sh <- rbindlist(list(
   data.table(IID=rownames(RAD), cohorte="Discovery (BGI)",
              shannon=vegan::diversity(renorm(RAD,comunes), index="shannon"),
              sexo=mD$gender_dummy, y=mD$y, Age=mD$Age, Weight_kg=mD$Weight_kg),
-  data.table(IID=rownames(RAL), cohorte="Validation 1 (LC)",
+  data.table(IID=rownames(RAL), cohorte="LC subset",
              shannon=vegan::diversity(renorm(RAL,comunes), index="shannon"),
              sexo=mL$gender_dummy, y=mL$y, Age=mL$Age, Weight_kg=mL$Weight_kg),
-  data.table(IID=rownames(RAC), cohorte="Validation 2 (Guangzhou)",
+  data.table(IID=rownames(RAC), cohorte="Guangzhou cohort",
              shannon=vegan::diversity(renorm(RAC,comunes), index="shannon"),
              sexo=mC$gender_dummy, y=mC$y, Age=mC$Age, Weight_kg=mC$Weight_kg)))
 fwrite(sh, file.path(P$out,"diversity_shannon.csv"))
@@ -137,7 +137,7 @@ fwrite(asoc, file.path(P$out,"diversity_shannon_association.csv"))
 
 Xall <- rbind(renorm(RAD,comunes), renorm(RAL,comunes), renorm(RAC,comunes))
 meta_all <- data.table(IID=rownames(Xall),
-                       cohorte=rep(c("Discovery (BGI)","Validation 1 (LC)","Validation 2 (Guangzhou)"),
+                       cohorte=rep(c("Discovery (BGI)","LC subset","Guangzhou cohort"),
                                    c(nrow(RAD),nrow(RAL),nrow(RAC))))
 cat(sprintf("\nBray-Curtis sobre %d muestras x %d especies...\n", nrow(Xall), ncol(Xall)))
 D <- vegan::vegdist(Xall, method="bray")

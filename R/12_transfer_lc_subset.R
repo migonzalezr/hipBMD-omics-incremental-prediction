@@ -37,7 +37,7 @@ for (f in c("fBalChip_PLS.r","fBPMaxOrthNewChip_PLS.R",
 K <- 5; SEED <- 2026; PREV <- 0.01; PT_MRS <- 0.05; COBERTURA_MIN <- 0.70; B <- 2000
 ALPHA <- 0.25
 CLIN3 <- c("Age","gender_dummy","Weight_kg")
-CLIN  <- c(CLIN3,"Height_cm","BMI","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
+CLIN  <- c(CLIN3,"Height_cm","Race_African","Race_Caucasian","Race_Asian","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
            "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
 
 leer_s <- function(f,nm){ s <- fread(f); setnames(s, sub("^#","",names(s)))
@@ -252,7 +252,7 @@ fit_enet <- function(Xtr,ytr,Xte){ set.seed(SEED)
 fit_xgb <- function(Xtr,ytr,Xte){
   dtr <- xgb.DMatrix(Xtr,label=ytr)
   pars <- list(objective="reg:squarederror", eta=0.05, max_depth=3,
-               subsample=0.8, colsample_bytree=0.8, min_child_weight=5)
+               subsample=0.8, colsample_bytree=0.8, min_child_weight=5, nthread=2)
   set.seed(SEED)
   cv <- xgb.cv(pars,dtr,nrounds=400,nfold=5,early_stopping_rounds=30,verbose=0)
   nb <- tryCatch({ lg <- as.data.frame(cv$evaluation_log)

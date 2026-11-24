@@ -1,14 +1,13 @@
 # ======================================================================
 # 21_table1_cohorts.R — Table 1
-#
-# Characteristics of the five analytic cohorts, with analytic sample sizes taken from the prediction files.
-#
-# Inputs : clinical data; prediction files
-# Outputs: results/table1_cohorts.csv; TABLE1.md
+# #
+# Characteristics of the five nonoverlapping analytic sets.
+# #
+# Inputs : clinical, phenotype and analysis-set files
+# Outputs: results/table1_cohorts.csv, results/TABLE1.md
 # Paper  : Table 1
 # Run from the repository root; paths are defined in config/paths.R.
 # ======================================================================
-
 rm(list = ls()); gc()
 library(data.table); library(readxl)
 
@@ -35,16 +34,27 @@ if (length(falta)) stop("no encuentro:\n  ", paste(falta, collapse="\n  "))
 CLIN  <- c("Age","gender_dummy","Weight_kg","Height_cm","BMI",
            "Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
            "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
-RAZAS <- c("Race_Caucasian","Race_African","Race_Asian","Race_Other")
+RAZAS_IN <- c("Race_Caucasian","Race_African","Race_Asian","Race_Other")
+RAZAS <- c("Race_Caucasian","Race_African","Race_AsianOther")
+juntar_raza <- function(d) {
+  if (all(c("Race_Asian","Race_Other") %in% names(d))) {
+    a <- trimws(as.character(d$Race_Asian)); o <- trimws(as.character(d$Race_Other))
+    si <- c("1","TRUE","Yes")
+    d[, Race_AsianOther := ifelse(is.na(a) & is.na(o), NA_character_,
+                                  ifelse(a %in% si | o %in% si, "Yes", "No"))]
+  }
+  d
+}
 DASH  <- "\u2014"
 
 b  <- as.data.frame(read_excel(P$bmd))
 ph <- unique(data.table(IID=trimws(as.character(b$Sample_ID)),
                         y=suppressWarnings(as.numeric(b$HTOT_BMD)))[!is.na(y)], by="IID")
 clB <- fread(file=P$clinB); clB[, IID := trimws(as.character(Subject_ID))]
+clB <- juntar_raza(clB)
 cols_raza <- intersect(RAZAS, names(clB))
 clB <- unique(clB[, c("IID",CLIN,cols_raza), with=FALSE], by="IID")
-clL <- fread(file=P$clinL); clL[, IID := trimws(as.character(Subject_ID))]
+clL <- fread(file=P$clinL); clL[, IID := trimws(as.character(Subject_ID))]; clL <- juntar_raza(clL)
 clL <- unique(clL[, c("IID", intersect(c(CLIN,cols_raza), names(clL))), with=FALSE], by="IID")
 chC <- fread(file=P$chcl); chC[, IID := trimws(as.character(ID))]
 
@@ -65,13 +75,11 @@ gw <- gw[complete.cases(gw)]
 cat(sprintf("GWAS: %d elegibles en keep -> %d con fenotipo y covariables completas\n",
             nrow(gk), nrow(gw)))
 cat(sprintf("  (debe coincidir con el OBS_CT que reporto plink; si no, revisar)\n"))
-
 solapa <- length(intersect(gw$IID, c(ids_disc, ids_hold, ids_lc)))
 cat(sprintf("  solapamiento GWAS vs cohortes de modelado: %d (debe ser 0)\n", solapa))
 if (solapa > 0) stop("el GWAS comparte individuos con las cohortes de modelado")
 
 sn  <- function(v) sprintf("%.2f \u00b1 %.2f", mean(v,na.rm=TRUE), sd(v,na.rm=TRUE))
-
 sn3 <- function(v) sprintf("%.3f \u00b1 %.3f", mean(v,na.rm=TRUE), sd(v,na.rm=TRUE))
 pc <- function(v, si=c("Yes","yes","1","TRUE")) {
   v <- trimws(as.character(v)); ok <- !is.na(v) & v!="" & v!="NA"
@@ -81,7 +89,7 @@ pc <- function(v, si=c("Yes","yes","1","TRUE")) {
 FILAS <- c("n","Total hip BMD (g/cm2)","Age (years)","Female",
            "Weight (kg)","Height (cm)","BMI (kg/m2)","Regular exercise","Smoking",
            "Sun exposure","Alcohol","Cheese","Milk","Yogurt",
-           "Caucasian","African American","Asian","Other")
+           "Caucasian","African American","Asian or other")
 
 col_los <- function(ids, cl, extra=NULL) {
   d <- merge(merge(data.table(IID=trimws(as.character(ids))), ph, by="IID"), cl, by="IID")
@@ -122,8 +130,8 @@ tt <- data.table(
   `GWAS discovery`                 = col_gwas(gw),
   `Modeling discovery (BGI)`       = col_los(ids_disc, clB),
   `Internal holdout (BGI)`         = col_los(ids_hold, clB),
-  `Validation 1: LC Sciences`      = col_los(ids_lc,   clL),
-  `Validation 2: Guangzhou`        = col_china(ids_ch))
+  `LC subset Sciences`      = col_los(ids_lc,   clL),
+  `Guangzhou cohort`        = col_china(ids_ch))
 
 cat("\n=== TABLE 1 \u2014 analytic cohorts ===\n"); print(tt, row.names=FALSE)
 fwrite(tt, file.path(P$out,"table1_cohorts.csv"))
@@ -159,5 +167,4 @@ cat("===== FIN OK =====\n")
 
 cs <- readRDS(file.path(BASE,"derived/analysis_sets/cohort_final.rds"))
 str(cs); print(names(cs))
-
 print(sapply(cs, function(x) if (is.character(x)||is.factor(x)) length(unique(x)) else NA))

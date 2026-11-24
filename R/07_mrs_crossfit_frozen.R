@@ -31,7 +31,7 @@ for (f in c("fBalChip_PLS.r","fBPMaxOrthNewChip_PLS.R",
 
 K <- 5; SEED <- 2026; PREV <- 0.01; FDRCUT <- 0.05
 CLIN3 <- c("Age","gender_dummy","Weight_kg")
-CLIN  <- c(CLIN3,"Height_cm","BMI","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
+CLIN  <- c(CLIN3,"Height_cm","Race_African","Race_Caucasian","Race_Asian","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
            "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
 
 disc <- unique(trimws(readLines(P$disc)))

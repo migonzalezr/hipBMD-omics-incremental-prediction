@@ -90,8 +90,8 @@ renorm <- function(M, sp){ X <- M[, sp, drop=FALSE]; X[X<0] <- 0; X/pmax(rowSums
 
 COH <- list(
   `Discovery (BGI)`          = list(X=renorm(RAD,comunes), m=mD),
-  `Validation 1 (LC)`        = list(X=renorm(RAL,comunes), m=mL),
-  `Validation 2 (Guangzhou)` = list(X=renorm(RAC,comunes), m=mC))
+  `LC subset`        = list(X=renorm(RAL,comunes), m=mL),
+  `Guangzhou cohort` = list(X=renorm(RAC,comunes), m=mC))
 
 VARS <- c(Age="Age", gender_dummy="Sex", Weight_kg="Weight", Height_cm="Height",
           BMI="BMI", y="Hip BMD")

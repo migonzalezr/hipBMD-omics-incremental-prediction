@@ -83,8 +83,8 @@ comunes <- Reduce(intersect, list(sp428, colnames(RAL), colnames(RAC)))
 renorm <- function(M, sp){ X <- M[, sp, drop=FALSE]; X[X<0] <- 0; X/pmax(rowSums(X), .Machine$double.eps) }
 COH <- list(
   `Discovery (BGI)`          = list(X=renorm(RAD,comunes), m=as.data.table(mD)),
-  `Validation 1 (LC)`        = list(X=renorm(RAL,comunes), m=as.data.table(mL)),
-  `Validation 2 (Guangzhou)` = list(X=renorm(RAC,comunes), m=as.data.table(mC)))
+  `LC subset`        = list(X=renorm(RAL,comunes), m=as.data.table(mL)),
+  `Guangzhou cohort` = list(X=renorm(RAC,comunes), m=as.data.table(mC)))
 cat(sprintf("discovery %d | LC %d | Guangzhou %d | %d especies comunes\n",
             nrow(RAD), nrow(RAL), nrow(RAC), length(comunes)))
 

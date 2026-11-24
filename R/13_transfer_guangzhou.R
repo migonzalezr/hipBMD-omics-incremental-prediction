@@ -1,7 +1,7 @@
 # ======================================================================
 # 13_transfer_guangzhou.R — Transfer to the Guangzhou cohort
 #
-# Applies the frozen scores and the reduced six-predictor base model to the Guangzhou cohort; reports calibration and recalibrated performance.
+# Applies the frozen scores and the reduced seven-predictor base model to the Guangzhou cohort; reports calibration and recalibrated performance.
 #
 # Inputs : data/phenotypes/guangzhou_clinical.csv; data/microbiome/guangzhou_species_abundance.csv; derived/prs_guangzhou/*
 # Outputs: results/guangzhou_predictions.csv; guangzhou_results.csv; guangzhou_calibration.csv
@@ -40,10 +40,10 @@ for (f in c("fBalChip_PLS.r","fBPMaxOrthNewChip_PLS.R",
 K <- 5; SEED <- 2026; PREV <- 0.01; PT_MRS <- 0.05; COBERTURA_MIN <- 0.70; B <- 2000
 ALPHA <- 0.25
 CLIN3 <- c("Age","gender_dummy","Weight_kg")
-CLIN  <- c(CLIN3,"Height_cm","BMI","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
+CLIN  <- c(CLIN3,"Height_cm","Race_African","Race_Caucasian","Race_Asian","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
            "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
 
-RED <- c("Age","Weight_kg","Height_cm","BMI","Alcohol","Exercise")
+RED <- c("Age","Weight_kg","Height_cm","mujer","Asia","Alcohol","Exercise")
 
 leer_s  <- function(f,nm){ s <- fread(file=f); setnames(s, sub("^#","",names(s)))
   o <- data.table(IID=trimws(as.character(s$IID)), v=as.numeric(s$SCORE1_AVG)); setnames(o,"v",nm); o }
@@ -83,6 +83,7 @@ si <- function(v) as.integer(trimws(as.character(v)) %in% c("Yes","yes","Y","1",
 mD[, `:=`(Alcohol  = si(Alcohol_Drinking_cat),
           Exercise = si(Exercise_Regular_cat),
           Milk     = si(Milk_Drink_cat),
+          Asia     = si(Race_Asian),
           mujer    = as.integer(trimws(as.character(gender_dummy)) %in% c("Female","female","F")))]
 
 ajustar_prep <- function(R){
@@ -123,6 +124,8 @@ clC <- fread(file=P$chcl); clC[, IID := trimws(as.character(ID))]
 clC[, `:=`(Alcohol  = as.integer(Alcohol_cat),
            Exercise = as.integer(Exercise_cat),
            Milk     = as.integer(Milk_cat),
+           mujer    = as.integer(Gender == "female"),
+           Asia     = 1L,  # all Guangzhou participants are East Asian
            y        = as.numeric(HTOT_BMD))]
 prsC <- leer_ch(P$prsC,"PRS"); prsCq <- leer_ch(P$prsCq,"PRS_qian")
 
@@ -166,9 +169,9 @@ comp <- data.table(
                "BMD media","BMD sd"),
   discovery = c(nrow(mD), round(mean(mD$Age),1), round(sd(mD$Age),1),
                 round(100*mean(mD$mujer),1), round(mean(mD$Weight_kg),1),
-                round(mean(mD$BMI),1), round(mean(yD),4), round(sd(yD),4)),
+                round(mean(mD$Weight_kg / (mD$Height_cm / 100)^2),1), round(mean(yD),4), round(sd(yD),4)),
   guangzhou = c(nrow(mC), round(mean(mC$Age),1), round(sd(mC$Age),1), 100,
-                round(mean(mC$Weight_kg),1), round(mean(mC$BMI),1),
+                round(mean(mC$Weight_kg),1), round(mean(mC$Weight_kg / (mC$Height_cm / 100)^2),1),
                 round(mean(yC),4), round(sd(yC),4)))
 cat("\n=== composicion de las cohortes ===\n"); print(comp, row.names=FALSE)
 
@@ -265,7 +268,7 @@ fit_enet <- function(Xtr,ytr,Xte){ set.seed(SEED)
 fit_xgb <- function(Xtr,ytr,Xte){
   dtr <- xgb.DMatrix(Xtr,label=ytr)
   pars <- list(objective="reg:squarederror", eta=0.05, max_depth=3,
-               subsample=0.8, colsample_bytree=0.8, min_child_weight=5)
+               subsample=0.8, colsample_bytree=0.8, min_child_weight=5, nthread=2)
   set.seed(SEED)
   cv <- xgb.cv(pars,dtr,nrounds=400,nfold=5,early_stopping_rounds=30,verbose=0)
   nb <- tryCatch({ lg <- as.data.frame(cv$evaluation_log)

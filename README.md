@@ -3,12 +3,11 @@
 Analysis code for:
 
 > **Beyond association: polygenic and gut microbial contributions to hip bone mineral density in a multi-cohort evaluation.**
-> Gonzalez-Ramirez M.I., *et al.* (manuscript under review).
+> Gonzalez-Ramirez M.I., *et al.* (submitted to *Advanced Science*).
 
 The study asks whether polygenic and gut microbial profiles add predictive information on total hip bone
-mineral density (BMD) beyond age, sex, weight and other clinical variables. Weights, thresholds and models are
-fixed in one set of participants and evaluated in others, with relatives kept apart across every analysis
-boundary (kinship firewall).
+mineral density (BMD) beyond clinical variables. Weights, thresholds and models are fixed in one set of
+participants and evaluated in others, with relatives kept apart across every analysis boundary.
 
 ## Analysis sets
 
@@ -22,41 +21,84 @@ boundary (kinship firewall).
 
 External polygenic weights: UK Biobank total femur BMD summary statistics (N = 28,938; NGDC Genome Variation Map, GVP000082).
 
+## Clinical base model
+
+LOS sets: age, sex, weight, height, recorded race (African American, White and Asian indicators), sun exposure,
+regular exercise, smoking, and consumption of alcohol, cheese, milk and yogurt, plus the first two genetic
+principal components. Body mass index is not a predictor. Guangzhou: a reduced model trained in the modeling
+discovery set with age, sex, weight, height, an Asian race indicator, alcohol consumption and regular exercise.
+Body mass index appears only as a covariate in the microbiome adjustment analyses (scripts 15-17).
+
 ## Repository layout
 
 ```
-config/paths.R          project root (run every script from the repository root)
+config/paths.R          project root and sample-label helper (run every script from the repository root)
 plink/                  genotype steps (PLINK 2 / PLINK 1.9)
 R/                      analysis scripts, numbered in run order
-R/figures/              main-text figures 1-4
-python/                 targeted Bacteroides vulgatus lookup (Python)
+R/figures/              figure scripts (main text and supporting information)
+python/                 Bacteroides vulgatus lookup, power summary and three supporting figures
 external/PLS-PBs/       principal-balance functions (not included; see below)
 ```
 
 ## Run order
 
-| Step | Script | What it does | Paper |
-|---|---|---|---|
-| 1 | `R/01_cohort_census.R` | Assigns participants to the GWAS pool or the evaluation set | Fig. 1a |
-| 2 | `plink/01_king.sh` | KING kinship table | Methods |
-| 3 | `R/02_kinship_firewall.R` | Removes relatives across boundaries; family-aware 80:20 discovery/holdout split | Fig. 1a |
-| 4 | `R/03_gwas_inputs.R`, `plink/02_gwas.sh` | Independent LOS GWAS | Methods |
-| 5 | `R/04_sample_sizes.R` | Participant-flow cascade with consistency checks | Fig. 1a |
-| 6 | `plink/03_prs_los.sh`, `plink/04_prs_external.sh` | Clumping and thresholding PRS (LOS and external weights) | Methods |
-| 7 | `R/05a_prs_threshold_los.R`, `R/05b_prs_threshold_external.R` | Threshold selection in the discovery set (5 x 5-fold CV) | Fig. 2a |
-| 8 | `R/06_prs_permutation.R` | Permutation test of the selected scores | Fig. 2c |
-| 9 | `R/07_mrs_crossfit_frozen.R`, `R/08_mrs_threshold.R` | Compositional MRS (principal balances), cross-fitted and frozen | Methods |
-| 10 | `plink/05_prs_guangzhou.sh` | Frozen PRS applied to the Guangzhou cohort | Methods |
-| 11 | `R/09_models_internal_holdout.R` | Elastic Net and XGBoost, seven nested specifications; internal holdout | Table 2 |
-| 12 | `R/10_bootstrap_ci_holdout.R`, `R/11_discovery_cv_increments.R` | Bootstrap CIs; discovery-set increments | Table 2 |
-| 13 | `R/12_transfer_lc_subset.R`, `R/13_transfer_guangzhou.R` | Transfer of the frozen models | Table 2, Fig. 4 |
-| 14 | `R/14_diversity_and_species.R`, `R/15_balance_covariate_decomposition.R` | Microbiome associations at three levels | Fig. 3 |
-| 15 | `R/16_host_variables_microbiome.R`, `R/17_adjustment_sensitivity.R`, `R/18_zero_replacement_sensitivity.R` | Host variables and sensitivity analyses | Fig. S2, Tables S9-S10 |
-| 16 | `R/19_model_interpretation.R` | Permutation importance, SHAP, coefficients | Fig. S6, Table S14 |
-| 17 | `R/20_calibration_metrics.R` | Calibration of the holdout and the LC subset | Fig. 4 |
-| 18 | `R/21_table1_cohorts.R`, `R/22_table2_results.R` | Tables 1 and 2 | Tables 1-2 |
-| 19 | `python/23_bvulgatus_targeted_lookup.py` | Targeted lookup of *Bacteroides vulgatus* (Guangzhou: L1-L4, hip, neck; LOS women: L1-L4, hip, neck). Lumbar spine BMD is used only here | Table S13 |
-| 20 | `R/figures/fig1_study_design.R` ... `fig4_calibration.R` | Main-text figures | Figs. 1-4 |
+| Step | Script(s) | What it does |
+|---|---|---|
+| 1 | `R/01_cohort_census.R` | Assigns participants to the GWAS pool or the evaluation set |
+| 2 | `plink/01_king.sh`, `R/02_kinship_firewall.R` | KING kinship; removes relatives across boundaries; family-aware discovery/holdout split |
+| 3 | `R/03_gwas_inputs.R`, `plink/02_gwas.sh` | Independent LOS GWAS |
+| 4 | `R/04_sample_sizes.R` | Participant-flow cascade with consistency checks |
+| 5 | `plink/03_prs_los.sh`, `plink/04_prs_external.sh` | Clumping-and-thresholding PRS (LOS and external weights) |
+| 6 | `R/05a_prs_threshold_los.R`, `R/05b_prs_threshold_external.R` | Threshold selection in the discovery set (5 x 5-fold CV) |
+| 7 | `R/06_prs_permutation.R` | Fixed-score permutation reference |
+| 8 | `R/07_mrs_crossfit_frozen.R`, `R/08_mrs_threshold.R` | Compositional MRS (principal balances): cross-fitted, two supervision schemes, threshold curve, frozen score |
+| 9 | `plink/05_prs_guangzhou.sh`, `plink/06_prs_restricted.sh` | Frozen PRS in Guangzhou; LOS scores restricted to transferable and Guangzhou variants |
+| 10 | `R/09_models_internal_holdout.R`, `R/10_bootstrap_ci_holdout.R`, `R/11_discovery_cv_increments.R` | Elastic Net and XGBoost, seven nested specifications; holdout CIs; discovery contrasts |
+| 11 | `R/12_transfer_lc_subset.R`, `R/13_transfer_guangzhou.R` | Transfer of the frozen models |
+| 12 | `R/14_diversity_and_species.R` ... `R/18_zero_replacement_sensitivity.R` | Microbiome associations at three levels and sensitivity analyses |
+| 13 | `R/19_model_interpretation.R`, `R/20_calibration_metrics.R` | Coefficients, permutation importance, SHAP; calibration and recalibrated agreement |
+| 14 | `R/21_table1_cohorts.R`, `R/22_table2_results.R` | Tables 1 and 2 (and the XGBoost table) |
+| 15 | `python/23_bvulgatus_targeted_lookup.py` | Targeted lookup of *Bacteroides vulgatus* (lumbar spine BMD used only here) |
+| 16 | `R/24`-`R/26`, `python/27` | External PRS at alternative thresholds (set `SENS_PRSQ`, `SENS_OUT`; script 25 adds bootstrap CIs) |
+| 17 | `R/28_ten_pcs_holdout.R`, `R/29_ten_pcs_lc.R` (+ `R/25` with `SENS_OUT`) | Ten instead of two genetic PCs |
+| 18 | `R/30_reduced_model_holdout.R`, `R/31_species_elastic_net_and_mrs16.R`, `R/32_variant_restriction_cost.R`, `R/33_lookup_li2025.R`, `R/35_balance_loadings.R` | Remaining sensitivity analyses, the Li et al. (2025) lookup and the composition of balances 1 and 136 |
+| 19 | `python/34_power_and_calibration_slopes.py` | Minimum detectable increments; calibration slopes across bootstrap resamples |
+| 20 | `R/figures/*.R`, `python/fig*.py` | Figures |
+
+## Where each result comes from
+
+| Paper item | Script(s) |
+|---|---|
+| Figure 1 | `R/figures/fig1_study_design.R` (inputs from steps 1-5) |
+| Figure 2 | `R/05a`, `R/05b`, `R/06`; `R/figures/fig2_prs_thresholds.R` |
+| Figure 3 | `R/09`-`R/13`; `R/figures/fig3_prediction_performance.R` |
+| Figure 4 | `R/14`, `R/15`, `R/16`; `R/figures/fig4_microbiome.R` |
+| Figure 5 | `R/20`; `R/figures/fig5_calibration.R` |
+| Table 1 | `R/21_table1_cohorts.R` |
+| Table 2 | `R/09`-`R/13`, `R/20`; `R/22_table2_results.R` |
+| Figure S1 | `python/figS1_genomic_qc.py` (summary files exported from the PLINK QC and GWAS runs) |
+| Figure S2 | `python/figS2_cohort_distributions.py` |
+| Figure S3 | `python/figS3_relatedness.py` (PI_HAT and KING summaries from the QC runs) |
+| Figure S4 | `R/figures/figS4_prs_deciles.R` |
+| Figure S5 | `R/09`-`R/13`; `R/figures/figS5_rmse.R` |
+| Figure S6 | `R/figures/figS6_microbiome_by_cohort.R` |
+| Figure S7 | `R/figures/figS7_host_variables.R` |
+| Figure S8 | `R/35_balance_loadings.R`; `R/figures/figS8_balance_taxa.R` |
+| Figure S9 | `R/19`; `R/figures/figS9_model_interpretation.R` |
+| Tables S1-S2 | Compiled manually from the GWAS-sample description and the output of `plink/02_gwas.sh` |
+| Table S3 | `R/05a`, `R/05b` |
+| Table S4 | `R/09`-`R/13`, `R/22` (XGBoost rows) |
+| Table S5 | `R/08_mrs_threshold.R` |
+| Table S6 | `R/09`, `R/10`, `R/11` |
+| Table S7 | A, G: `python/34`; B-C: `R/28`, `R/29`, `R/25`; D: `R/30`; E-F: `R/31`, `R/07`; H: `R/24`-`R/27` |
+| Table S8 | `R/15_balance_covariate_decomposition.R` |
+| Table S9 | `R/14`, `R/18` |
+| Table S10 | `R/14`, `R/16`, `R/17` |
+| Table S11 | `R/20_calibration_metrics.R` |
+| Table S12 | `plink/06_prs_restricted.sh`, `R/32_variant_restriction_cost.R` |
+| Table S13 | `R/19_model_interpretation.R` |
+| Table S14 | `R/33_lookup_li2025.R` |
+| Table S15 | `python/23_bvulgatus_targeted_lookup.py` |
 
 ## Expected data layout (not included)
 
@@ -70,7 +112,12 @@ data/microbiome/   los_bgi_species_abundance.csv, los_lc_species_abundance.csv, 
                    metagenome_sample_ids.xlsx, metagenome_sample_filter.xlsx, metagenome_id_map.xlsx,
                    metagenome_id_corrections.csv (optional; columns old, new)
 data/external/     ukb_total_femur_bmd_sumstats.tsv.gz
+derived/qc/        summary files exported from the PLINK QC and GWAS runs, used only by Figures S1 and S3
 ```
+
+`metagenome_id_map.xlsx` links participants to metagenome samples and must contain two sheets: `bgi`
+(columns `BGI_1794` = participant ID and `Metagenome_ID`) and `lc` (columns `LC_495` = participant ID and
+`Metagenome_ID`).
 
 `derived/`, `results/` and `figures/` are created by the scripts.
 
@@ -87,5 +134,5 @@ MRS scripts.
 ## Software
 
 R 4.6.0 with data.table, readxl, glmnet 5.0, xgboost 3.2.1.1, vegan 2.7.5, zCompositions 1.6.2, compositions,
-pls, MASS, ggplot2 and patchwork; Python 3.12 with pandas 3.1, numpy 2.5, statsmodels 0.15 and openpyxl 3.1;
+pls, MASS, ggplot2 and patchwork; Python 3.12 with pandas, numpy, scipy, statsmodels, matplotlib and openpyxl;
 PLINK v1.9 and PLINK 2. Random seeds are fixed (2026).

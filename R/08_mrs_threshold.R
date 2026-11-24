@@ -31,7 +31,7 @@ for (f in c("fBalChip_PLS.r","fBPMaxOrthNewChip_PLS.R",
 K <- 5; SEED <- 2026; PREV <- 0.01
 UMBRALES <- c(1e-4, 1e-3, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0)
 CLIN3 <- c("Age","gender_dummy","Weight_kg")
-CLIN  <- c(CLIN3,"Height_cm","BMI","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
+CLIN  <- c(CLIN3,"Height_cm","Race_African","Race_Caucasian","Race_Asian","Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
            "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
 
 disc <- unique(trimws(readLines(P$disc)))
@@ -108,6 +108,9 @@ fold <- integer(length(y))
 for(lv in levels(q)){ i <- which(q==lv); fold[i] <- sample(rep(1:K,length.out=length(i))) }
 
 Xd <- model.matrix(~ ., data=as.data.frame(meta[,c(CLIN,"gPC1","gPC2"),with=FALSE]))[,-1,drop=FALSE]
+# Keep at least one member of the rare reference race group in each training fold.
+reference <- which(rowSums(Xd[, c("Race_AfricanYes","Race_CaucasianYes","Race_AsianYes"), drop=FALSE]) == 0L)
+if (length(reference) >= 2L && length(unique(fold[reference])) == 1L) { swap <- c(reference[1L], which(fold != fold[reference[1L]])[1L]); fold[swap] <- rev(fold[swap]) }
 colnames(Xd) <- make.names(colnames(Xd), unique=TRUE)
 Xd <- Xd[, apply(Xd,2,function(z) length(unique(z))>1), drop=FALSE]
 r2_oof <- function(d,f){

@@ -23,7 +23,7 @@ SC <- data.table(
   clave = c("PRS", "PRS_qian", "MRS", "QMRS"),
   espec = c("S3_base_PRS", "S3q_base_PRSqian", "S4_base_MRS", "S5q_base_PRSqian_MRS"),
   etiqueta = c("PRS (own GWAS, LOS)", "PRS (external GWAS, Qian)", "MRS", "PRS (Qian) + MRS"))
-COH <- c("Modeling discovery", "Internal holdout", "Validation 1: LC", "Validation 2: Guangzhou")
+COH <- c("Modeling discovery", "Internal holdout", "LC subset", "Guangzhou cohort")
 
 oof <- rd("discovery_predictions_oof.csv"); y <- oof$y; n <- length(y)
 r2 <- function(o, p) 1 - sum((o - p)^2) / sum((o - mean(o))^2)
@@ -77,6 +77,7 @@ larga <- merge(dcast(dr, algoritmo + cohorte + clave ~ tipo, value.var = c("dR2"
                ass[, .(cohorte, clave, n, beta, beta_lo = IC95_inf, beta_hi = IC95_sup, P)],
                by = c("cohorte", "clave"), all.x = TRUE)
 larga[, `:=`(cohorte = factor(cohorte, levels = COH), clave = factor(clave, levels = SC$clave))]
+larga[, n := unname(NN[as.character(cohorte)])]
 setorder(larga, algoritmo, clave, cohorte)
 fwrite(larga, file.path(P$res, "table2_results.csv"))
 
@@ -84,7 +85,6 @@ f4 <- function(x) ifelse(is.na(x), NA, sprintf("%+.4f", x))
 ci <- function(e, l, h) ifelse(is.na(e), "&mdash;",
   paste0(f4(e), " (", f4(l), ", ", f4(h), ")", ifelse(l > 0 | h < 0, " *", "")))
 fp <- function(p) ifelse(is.na(p), "&mdash;", ifelse(p < 0.001, formatC(p, format = "e", digits = 1), sprintf("%.3f", p)))
-nn <- setNames(c(1430, 351, 495, 492), COH)
 
 tabla_md <- function(a) {
   d <- larga[algoritmo == a]
@@ -93,27 +93,25 @@ tabla_md <- function(a) {
            raw_txt = ci(dR2_raw, lo_raw, hi_raw),
            recal_txt = ifelse(cohorte == COH[1], "n/a", ci(dR2_recal, lo_recal, hi_recal)))]
   d[clave == "QMRS", `:=`(beta_txt = "&mdash;", P_txt = "&mdash;")]
-  out <- c("| Score | Cohort | n | &beta; per SD (95% CI) | P | &Delta;R&sup2; raw (95% CI) | &Delta;R&sup2; recalibrated (95% CI) |",
-           "|:--|:--|--:|:--|--:|:--|:--|")
-  for (i in seq_len(nrow(d))) out <- c(out, sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+  out <- c("| Score | Cohort | &beta; per SD (95% CI)<sup>a</sup> | P<sup>a</sup> | &Delta;R&sup2; raw (95% CI)<sup>b</sup> | &Delta;R&sup2; recalibrated (95% CI)<sup>c</sup> |",
+           "|:--|:--|:--|--:|:--|:--|")
+  for (i in seq_len(nrow(d))) out <- c(out, sprintf("| %s | %s | %s | %s | %s | %s |",
       if (i == 1 || d$clave[i] != d$clave[i-1]) d$Score[i] else "", d$cohorte[i],
-      format(nn[as.character(d$cohorte[i])], big.mark = ","), d$beta_txt[i], d$P_txt[i], d$raw_txt[i], d$recal_txt[i]))
+      d$beta_txt[i], d$P_txt[i], d$raw_txt[i], d$recal_txt[i]))
   out
 }
 notas <- c(
   "",
-  "&beta;: change in total hip BMD (g/cm&sup2;) per SD of the score, from a linear model adjusted for the clinical covariates and the first two genetic principal components (Guangzhou: the six covariates of the reduced model; no genetic principal components exist there and sex is constant). Scores were standardized with discovery parameters in the holdout and within cohort in LC and Guangzhou. No single &beta; exists for the combined row.",
-  "&Delta;R&sup2;: gain over the base model (clinical covariates + genetic principal components) with the score added; 95% CIs from 2,000 bootstrap resamples of participants. * CI excludes zero.",
-  "Modeling discovery: out-of-fold predictions from one 5-fold split (seed 2026). PRS thresholds were selected in this same set, so the PRS rows are optimistic here; the repeated 5 &times; 5 cross-validation used for selection gave 0.0043 (LOS) and 0.0042 (Qian), with P < 0.007 against 150 phenotype permutations for both (Figure 2). Recalibration does not apply to out-of-fold predictions in the training set.",
-  "Recalibrated &Delta;R&sup2;: computed after a linear recalibration fitted in the target cohort itself; it separates ranking from calibration and is an upper bound, not a deployable estimate (Figure 4). In a miscalibrated cohort, any added predictor that shifts predictions toward the cohort mean raises raw R&sup2; without adding information; this is why raw and recalibrated estimates diverge in Guangzhou, where the base model is offset by &minus;0.074 g/cm&sup2;.",
-  "Guangzhou: base model reduced to the six predictors available in that cohort (age, weight, height, BMI, alcohol, exercise), trained in the modeling discovery set.",
-  "MRS: the pre-specified MRS (balances at FDR < 0.05) selected zero balances in the discovery set; the MRS shown is the secondary, threshold-based score (P < 0.05).")
+  "Sample sizes were 1,430 in modeling discovery, 351 in the internal holdout, 495 in the LC Sciences subset, and 492 in Guangzhou. PRS, polygenic risk score. MRS, metagenomic risk score. LOS, Louisiana Osteoporosis Study. The external PRS uses UK Biobank weights. The full base model includes age, sex, weight, height, recorded race (African American, White, and Asian indicators), sun exposure, regular exercise, smoking, alcohol consumption, cheese, milk, yogurt, and the first two genetic principal components. The Guangzhou base model was trained in modeling discovery with age, weight, height, sex, Asian race, alcohol consumption, and regular exercise.",
+  "<sup>a</sup> &beta; is the adjusted difference in total hip bone mineral density (BMD, g/cm&sup2;) per SD of the score. Cohort-specific linear regressions omit constant or redundant predictors. P values are from two-sided t tests. A dash denotes the absence of a single score coefficient and P value for the combined model.",
+  "<sup>b</sup> &Delta;R&sup2; is the R&sup2; with the indicated score(s) minus the base-model R&sup2; in the same participants. Raw R&sup2; is 1 minus the ratio of squared prediction error to total sum of squares. Both &Delta;R&sup2; intervals use 2,000 paired bootstrap resamples. An asterisk indicates an interval that excludes zero.",
+  "<sup>c</sup> Recalibrated R&sup2; is the R&sup2; from a least-squares regression of observed on predicted BMD with an intercept in the evaluation cohort. It equals the squared Pearson correlation. n/a denotes discovery estimates from out-of-fold predictions, where recalibration was not evaluated.",
+  "Evaluation with this covariate specification was post hoc. The secondary MRS used balances with nominal P < 0.05.")
 
 md <- c("# Table 2. Association and predictive contribution of each score across the four cohorts",
         "", "Elastic Net (primary algorithm).", "", tabla_md("ElasticNet"), notas,
         "", "", "# Supplementary Table S_. Same as Table 2, XGBoost", "", tabla_md("XGBoost"),
         "", "Footnotes as in Table 2. &beta; comes from a linear model and does not depend on the algorithm.")
-
 writeLines(md, file.path(P$docs, "TABLE2.md"))
 
 cat("\n=== Tabla 2, Elastic Net ===\n")

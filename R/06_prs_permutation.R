@@ -35,7 +35,7 @@ pca <- fread(file=P$pca, header=FALSE)
 setnames(pca, c("FID","IID", paste0("PC", seq_len(ncol(pca)-2))))
 pca <- pca[, .(IID=trimws(as.character(IID)), PC1, PC2)]
 cl <- fread(file=P$clin); cl[, IID := trimws(as.character(Subject_ID))]
-CLIN <- c("Age","gender_dummy","Weight_kg","Height_cm","BMI",
+CLIN <- c("Age","gender_dummy","Weight_kg","Height_cm","Race_African","Race_Caucasian","Race_Asian",
           "Exercise_Regular_cat","Smoke_cat","Sun_Exposure_cat",
           "Alcohol_Drinking_cat","Cheese_Eat_cat","Milk_Drink_cat","Yogurt_Eat_cat")
 cl <- unique(cl[, c("IID",CLIN), with=FALSE], by="IID")
@@ -58,14 +58,25 @@ f_prs  <- as.formula(paste("y ~", paste(c(vars,"PRS"), collapse=" + ")))
 
 set.seed(SEED)
 n <- nrow(base)
-folds <- lapply(seq_len(R), function(r) sample(rep(seq_len(K), length.out=n)))
+# Keep at least one member of the rare reference group in each training fold.
+reference <- which(rowSums(X[, c("Race_AfricanYes", "Race_CaucasianYes",
+                                 "Race_AsianYes"), drop = FALSE]) == 0L)
+stopifnot(length(reference) >= 2L)
+folds <- lapply(seq_len(R), function(r) {
+  fold <- sample(rep(seq_len(K), length.out = n))
+  if (length(unique(fold[reference])) == 1L) {
+    swap <- c(reference[1L], which(fold != fold[reference[1L]])[1L])
+    fold[swap] <- rev(fold[swap])
+  }
+  fold
+})
 
 r2_oof <- function(y,yhat) 1 - sum((y-yhat)^2)/sum((y-mean(y))^2)
 cv_r2 <- function(dat, form, fold) {
   oof <- numeric(nrow(dat))
   for (k in sort(unique(fold))) {
     tr <- fold != k
-    oof[!tr] <- predict(lm(form, data=dat[tr]), newdata=dat[!tr])
+    oof[!tr] <- predict(lm(form, data=dat[tr]), newdata=dat[!tr], rankdeficient = "NAwarn")
   }
   r2_oof(dat$y, oof)
 }
